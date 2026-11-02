@@ -1,0 +1,6 @@
+<p *ngIf="error" class="alert error">{{ error }}</p>
+<gui-loading *ngIf="!asset && !error"></gui-loading
+><gui-ficha *ngIf="asset" [asset]="asset" (close)="close()" (qr)="qr = true"></gui-ficha
+><gui-modal *ngIf="qr && asset" title="Etiqueta del activo" (close)="qr = false"
+  ><div class="modal-body"><gui-qr [asset]="asset"></gui-qr></div
+></gui-modal>

@@ -1,0 +1,16 @@
+export const paths: Record<number, string> = {
+  '10': 'dashboard',
+  '30': 'inventario',
+  '40': 'movimientos',
+  '50': 'ubicaciones',
+  '60': 'mantenimiento',
+  '130': 'proveedores',
+  '140': 'ingresos',
+  '150': 'egresos',
+  '70': 'documentos',
+  '80': 'reportes',
+  '90': 'usuarios',
+  '100': 'roles',
+  '110': 'configuracion',
+  '120': 'auditoria',
+};

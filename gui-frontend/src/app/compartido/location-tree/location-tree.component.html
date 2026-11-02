@@ -1,0 +1,63 @@
+<section class="panel location-tree">
+  <div class="panel-heading">
+    <h2>Estructura de ubicaciones</h2>
+    <span>Despliega un piso para ver sus ambientes</span>
+  </div>
+  <ng-container
+    *ngTemplateOutlet="branch; context: { parent: null, depth: 0, seen: [] }"
+  ></ng-container>
+</section>
+<ng-template #branch let-parent="parent" let-depth="depth" let-seen="seen">
+  <div *ngFor="let location of children(parent, seen)">
+    <div class="tree-node" [style.--location-depth]="depth">
+      <button
+        *ngIf="hasChildren(location.id); else leaf"
+        class="icon-button tree-toggle"
+        [attr.aria-label]="(isExpanded(location) ? 'Contraer ' : 'Expandir ') + location.name"
+        [attr.aria-expanded]="isExpanded(location)"
+        (click)="toggle(location)"
+      >
+        <gui-icon [name]="isExpanded(location) ? 'ChevronDown' : 'ChevronRight'"></gui-icon>
+      </button>
+      <ng-template #leaf><gui-icon name="MapPin"></gui-icon></ng-template>
+      <strong>{{ location.name }}</strong>
+      <small *ngIf="location.stateId === 0">Inactivo</small>
+      <span>{{ location.quantity || 0 }} activos</span>
+      <div class="tree-actions">
+        <button
+          *ngIf="creatable && location.stateId !== 0"
+          class="icon-button"
+          [attr.aria-label]="'Añadir espacio dentro de ' + location.name"
+          (click)="createChild.emit(location)"
+        >
+          <gui-icon name="Plus" [size]="18"></gui-icon>
+        </button>
+        <button
+          *ngIf="editable"
+          class="icon-button"
+          [attr.aria-label]="'Editar ' + location.name"
+          (click)="edit.emit(location)"
+        >
+          <gui-icon name="Pencil" [size]="18"></gui-icon>
+        </button>
+        <button
+          *ngIf="deletable && location.stateId !== 2"
+          class="icon-button location-delete action-danger"
+          [attr.aria-label]="'Eliminar ' + location.name"
+          title="Eliminar ubicación"
+          (click)="remove.emit(location)"
+        >
+          <gui-icon name="Trash2" [size]="18"></gui-icon>
+        </button>
+      </div>
+    </div>
+    <ng-container *ngIf="isExpanded(location)">
+      <ng-container
+        *ngTemplateOutlet="
+          branch;
+          context: { parent: location.id, depth: depth + 1, seen: next(seen, location.id) }
+        "
+      ></ng-container>
+    </ng-container>
+  </div>
+</ng-template>

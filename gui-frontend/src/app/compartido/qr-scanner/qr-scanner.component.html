@@ -1,0 +1,32 @@
+<div class="modal-body">
+  <p>
+    Apunta la cámara a la etiqueta QR del activo. Al leerla se abrirá su ficha, según tus permisos.
+  </p>
+  <div *ngIf="error" class="alert error" role="alert">{{ error }}</div>
+  <video
+    #preview
+    autoplay
+    muted
+    playsinline
+    [hidden]="!running"
+    aria-label="Vista de la cámara para escanear QR"
+  ></video>
+  <button
+    *ngIf="!running"
+    type="button"
+    class="button primary"
+    [disabled]="starting"
+    (click)="start()"
+  >
+    {{ starting ? 'Abriendo cámara…' : 'Activar cámara' }}
+  </button>
+  <button *ngIf="running" type="button" class="button secondary" (click)="stop()">
+    Detener cámara
+  </button>
+  <p>
+    <small
+      >También puedes pegar el contenido del QR o usar un lector USB en el campo de búsqueda de
+      Inventario.</small
+    >
+  </p>
+</div>

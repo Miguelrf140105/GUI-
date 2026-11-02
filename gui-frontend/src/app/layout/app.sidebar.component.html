@@ -1,0 +1,15 @@
+<aside class="sidebar" [class.open]="layout.mobile">
+  <a class="brand" routerLink="/dashboard"
+    ><span class="brand-mark"><gui-icon name="GraduationCap" [size]="26"></gui-icon></span
+    ><span
+      >GUI<small>Inventario · {{ institution.shortName }}</small></span
+    ></a
+  >
+  <div class="workspace-label">ESPACIO DE TRABAJO</div>
+  <app-menu></app-menu>
+  <div class="sidebar-bottom">
+    <gui-icon name="ShieldCheck"></gui-icon>
+    <div>Control con trazabilidad<small>GUI · Inventario UNID</small></div>
+    <span class="online-dot"></span>
+  </div>
+</aside>

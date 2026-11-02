@@ -1,0 +1,90 @@
+<section class="product-gallery" aria-label="Fotos del producto">
+  <div *ngIf="error" class="alert error" role="alert">{{ error }}</div>
+  <div class="product-photo-stage">
+    <img
+      *ngIf="selected"
+      [src]="api.url(selected, false)"
+      alt="Foto del producto"
+      width="360"
+      height="240"
+      decoding="async"
+    />
+    <div *ngIf="!selected" class="product-photo-placeholder">
+      <gui-icon name="Package" [size]="42"></gui-icon
+      ><span>{{ loading ? 'Cargando fotos…' : 'Sin foto del producto' }}</span>
+    </div>
+  </div>
+  <div class="product-photo-strip" *ngIf="photos.length">
+    <button
+      type="button"
+      *ngFor="let photo of photos"
+      [attr.aria-label]="'Ver foto ' + photo.name"
+      [attr.aria-pressed]="selected === photo.id"
+      [class.active]="selected === photo.id"
+      (click)="selected = photo.id"
+    >
+      <img
+        [src]="api.url(photo.id)"
+        [alt]="photo.name"
+        loading="lazy"
+        width="56"
+        height="56"
+      /><span *ngIf="photo.isCover">Principal</span>
+    </button>
+  </div>
+  <ng-container *ngIf="auth.can(303) && productId">
+    <p class="product-photo-help">
+      Estas fotos se comparten con todas las unidades del mismo producto.
+    </p>
+    <input
+      #photoInput
+      class="product-photo-input"
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      multiple
+      aria-label="Añadir fotos del producto"
+      [disabled]="busy || loading || photos.length >= 5"
+      (change)="upload($event)"
+    />
+    <p class="product-photo-help">
+      {{ busy ? 'Procesando fotos…' : photos.length + ' de 5 fotos · JPEG, PNG o WebP' }}
+    </p>
+    <div class="product-photo-actions" *ngIf="selected">
+      <button
+        type="button"
+        class="button secondary"
+        (click)="change(selected, 'cover')"
+        [disabled]="busy || loading"
+      >
+        Usar como principal
+      </button>
+      <button
+        type="button"
+        class="button secondary action-danger"
+        (click)="pendingRemove = selected"
+        [disabled]="busy || loading"
+      >
+        Retirar foto
+      </button>
+    </div>
+    <div *ngIf="pendingRemove" class="product-photo-confirm" role="alert">
+      <p>¿Retirar esta foto de todas las unidades del producto?</p>
+      <button
+        type="button"
+        class="button secondary"
+        [disabled]="busy"
+        (click)="pendingRemove = null"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="button primary action-danger"
+        [disabled]="busy"
+        (click)="change(pendingRemove, 'remove')"
+      >
+        Retirar foto
+      </button>
+    </div>
+  </ng-container>
+</section>

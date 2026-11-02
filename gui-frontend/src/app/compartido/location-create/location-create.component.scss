@@ -1,0 +1,123 @@
+:host {
+  display: contents;
+}
+.location-create-intro h3 {
+  font-size: 18px;
+  color: #24493b;
+  margin: 0 0 7px;
+}
+.location-create-intro p {
+  color: #7c8c7e;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+.location-create-levels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+  background: #f0f4ec;
+  padding: 6px;
+  border-radius: 10px;
+  margin-bottom: 22px;
+}
+.location-create-levels button {
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 10px 5px;
+  background: transparent;
+  color: #6e8172;
+  font-size: 12px;
+  cursor: pointer;
+}
+.location-create-levels button.active {
+  background: white;
+  color: #24664f;
+  border-color: #d6e3d1;
+  box-shadow: 0 2px 4px #243f2610;
+  font-weight: 600;
+}
+.location-create-section {
+  margin-bottom: 22px;
+}
+.location-create-section h4 {
+  font-size: 12px;
+  color: #345a46;
+  margin: 0 0 14px;
+}
+.location-create-section label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #72896e;
+  font-size: 11px;
+  font-weight: 600;
+}
+.location-create-section input,
+.location-create-section select {
+  padding: 11px;
+  border: 1px solid #dce5d9;
+  border-radius: 7px;
+  background: white;
+  color: #345045;
+  font: inherit;
+  font-size: 12px;
+  min-width: 0;
+}
+.location-create-section small {
+  font-weight: 400;
+  font-size: 10px;
+}
+.location-create-responsible {
+  padding: 14px 0;
+  border-top: 1px solid #e2e9dc;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #758a75;
+  font-size: 11px;
+}
+.location-create-responsible strong {
+  font-size: 12px;
+  color: #345045;
+}
+.location-create-responsible small {
+  font-size: 10px;
+}
+.location-create-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 5px 0;
+}
+.location-create-preview {
+  background: #f2f6ed;
+  padding: 14px 16px;
+  border: 1px solid #e0e8d7;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 12px;
+}
+.location-create-preview small {
+  font-size: 10px;
+  color: #809078;
+}
+.location-create-preview strong {
+  font-size: 12px;
+  color: #355a46;
+  line-height: 1.6;
+}
+.location-create-preview span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #8b987f;
+}
+@media (max-width: 500px) {
+  .location-create-levels {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

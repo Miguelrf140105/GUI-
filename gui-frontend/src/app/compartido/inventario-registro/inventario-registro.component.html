@@ -1,0 +1,375 @@
+<form
+  *ngIf="!modelPickerLineKey"
+  #registration="ngForm"
+  #formElement
+  (ngSubmit)="submit(registration)"
+  class="editor-form inventory-registration"
+  novalidate
+>
+  <div class="registration-fields" [attr.aria-busy]="busy">
+    <div *ngIf="error" class="alert error registration-error" role="alert" tabindex="-1">
+      {{ error }}
+    </div>
+    <div class="modal-body registration-body" [attr.inert]="busy ? '' : null">
+      <div class="form-note">
+        <gui-icon name="Info"></gui-icon
+        ><span
+          >Completa los productos, su origen y el destino. Una misma factura, boleta o guía puede
+          respaldar varios productos.</span
+        >
+      </div>
+      <gui-accordion
+        title="Productos a registrar"
+        [summary]="
+          totals.quantity +
+          ' ' +
+          units(totals.quantity) +
+          ' · ' +
+          lines.length +
+          (lines.length === 1 ? ' producto' : ' productos')
+        "
+        [open]="openSections.includes('products')"
+        (toggle)="toggle('products')"
+        ><p class="registration-help">
+          Elige el tipo, completa sus datos y señala cuántas unidades recibiste.
+        </p>
+        <gui-accordion
+          *ngFor="let line of lines; let index = index; trackBy: trackLine"
+          [title]="line.name.trim() || 'Datos del producto'"
+          [summary]="familyName(line) + ' · ' + line.quantity + ' ' + units(line.quantity)"
+          [open]="!closedProducts.includes(line.key)"
+          [product]="true"
+          (toggle)="toggleProduct(line)"
+          ><div class="form-grid">
+            <label
+              >Tipo de producto *<gui-search-select
+                [name]="'family-' + line.key"
+                [label]="'Tipo de producto ' + (index + 1)"
+                [options]="app.options('families')"
+                [ngModel]="line.familyId"
+                (ngModelChange)="familyChanged(index, $event)"
+                [required]="true"
+              ></gui-search-select
+            ></label>
+            <div>
+              <span>Reutilizar modelo (opcional)</span>
+              <div class="asset-pick-summary">
+                <button
+                  type="button"
+                  class="button secondary"
+                  [disabled]="!line.familyId"
+                  (click)="openModelPicker(line)"
+                >
+                  <gui-icon name="Search"></gui-icon
+                  >{{ line.productId ? 'Cambiar modelo' : 'Buscar modelo existente' }}
+                </button>
+                <small>{{
+                  line.productId
+                    ? line.name + ' · ' + line.brand + ' ' + line.model
+                    : 'Nuevo: completa los datos abajo'
+                }}</small>
+                <button
+                  *ngIf="line.productId"
+                  type="button"
+                  class="text-button"
+                  (click)="modelChanged(index, '')"
+                >
+                  Crear como modelo nuevo
+                </button>
+              </div>
+            </div>
+            <label class="full-width"
+              >Nombre del producto *<input
+                [name]="'name-' + line.key"
+                [(ngModel)]="line.name"
+                required
+                maxlength="200"
+                [readonly]="!!line.productId" /></label
+            ><label
+              >Marca<input
+                [name]="'brand-' + line.key"
+                [(ngModel)]="line.brand"
+                maxlength="80"
+                [readonly]="!!line.productId" /></label
+            ><label
+              >Modelo<input
+                [name]="'model-' + line.key"
+                [(ngModel)]="line.model"
+                maxlength="80"
+                [readonly]="!!line.productId" /></label
+            ><label
+              >Cantidad de unidades *<input
+                type="number"
+                [name]="'quantity-' + line.key"
+                [(ngModel)]="line.quantity"
+                required
+                min="1"
+                max="1000"
+                step="1" /></label
+            ><label class="full-width"
+              >Series de fábrica (opcional, una por unidad y línea)<textarea
+                [name]="'serials-' + line.key"
+                [(ngModel)]="line.serialList"
+                rows="2"
+                maxlength="101000"
+              ></textarea>
+            </label>
+            <label *ngFor="let field of fieldsFor(line.familyId); trackBy: trackSpecification"
+              >{{ field.name }}{{ field.unit ? ' (' + field.unit + ')' : ''
+              }}{{ field.required ? ' *' : ''
+              }}<select
+                *ngIf="field.dataType === 3"
+                [name]="'spec-' + line.key + '-' + field.id"
+                [(ngModel)]="line.specifications[field.id]"
+                [required]="!!field.required"
+              >
+                <option [ngValue]="''">Seleccionar…</option>
+                <option value="1">Sí</option>
+                <option value="0">No</option></select
+              ><input
+                *ngIf="field.dataType !== 3"
+                [type]="field.dataType === 2 ? 'number' : field.dataType === 4 ? 'date' : 'text'"
+                [name]="'spec-' + line.key + '-' + field.id"
+                [(ngModel)]="line.specifications[field.id]"
+                [required]="!!field.required"
+                maxlength="500"
+                step="any"
+            /></label>
+          </div>
+          <div class="accordion-actions">
+            <button
+              *ngIf="lines.length > 1"
+              type="button"
+              class="text-button"
+              (click)="remove(line)"
+            >
+              <gui-icon name="Trash2"></gui-icon>Quitar producto</button
+            ><button type="button" class="button secondary" (click)="finish(line)">
+              <gui-icon name="Check"></gui-icon>Listo, cerrar producto
+            </button>
+          </div></gui-accordion
+        >
+        <button type="button" class="button secondary add-inventory-product" (click)="addProduct()">
+          <gui-icon name="Plus"></gui-icon>Agregar producto
+        </button>
+        <div class="intake-total">
+          {{ totals.quantity }} {{ units(totals.quantity) }} en esta recepción
+        </div>
+        <div class="accordion-next">
+          <button type="button" class="button secondary" (click)="continueTo('products', 'origin')">
+            Continuar con el origen
+          </button>
+        </div></gui-accordion
+      >
+      <gui-accordion
+        title="Origen de los bienes"
+        [summary]="originSummary"
+        [open]="openSections.includes('origin')"
+        (toggle)="toggle('origin')"
+        ><p>Indica cómo llegaron y quién los entregó.</p>
+        <div class="form-grid">
+          <label
+            >Procedencia *<select name="typeId" [(ngModel)]="header.typeId" required>
+              <option [ngValue]="null">Seleccionar…</option>
+              <option *ngFor="let type of movementTypes()" [ngValue]="type.id">
+                {{ type.name }}
+              </option>
+            </select></label
+          ><label
+            >Fecha de recepción *<input name="date" type="date" [(ngModel)]="header.date" required
+          /></label>
+        </div>
+        <div class="registration-provider">
+          <div class="section-heading">
+            <h4>Proveedor o institución donante</h4>
+            <button
+              *ngIf="auth.can(1302)"
+              type="button"
+              class="text-button"
+              (click)="toggleProvider()"
+            >
+              {{ newProvider ? 'Elegir existente' : 'Nuevo proveedor' }}
+            </button>
+          </div>
+          <p *ngIf="newProvider" role="status" class="registration-help">{{ providerMessage }}</p>
+          <div *ngIf="newProvider" class="form-grid">
+            <label *ngFor="let field of providerFields"
+              >{{ field.label }}{{ field.required ? ' *' : ''
+              }}<input
+                [name]="'provider-' + field.key"
+                [ngModel]="provider[field.key]"
+                (ngModelChange)="
+                  field.key === 'document' ? onDocument($event) : (provider[field.key] = $event)
+                "
+                [type]="field.key === 'email' ? 'email' : 'text'"
+                [email]="field.key === 'email'"
+                [required]="field.required"
+                [attr.maxlength]="field.max"
+                [readonly]="field.key !== 'document' && !!matchedProvider"
+            /></label>
+          </div>
+          <gui-search-select
+            *ngIf="!newProvider"
+            name="institutionId"
+            label="Proveedor o donante"
+            [options]="app.options('institutions')"
+            [(ngModel)]="header.institutionId"
+            (ngModelChange)="documentIds = []"
+            [required]="true"
+          ></gui-search-select>
+        </div>
+        <div class="accordion-next">
+          <button
+            type="button"
+            class="button secondary"
+            (click)="continueTo('origin', 'documents')"
+          >
+            Continuar con comprobantes
+          </button>
+        </div></gui-accordion
+      >
+      <gui-accordion
+        title="Comprobantes"
+        [summary]="documents.length + documentIds.length + ' asociados · opcional'"
+        [open]="openSections.includes('documents')"
+        (toggle)="toggle('documents')"
+        ><div class="section-heading">
+          <p>Factura, boleta, guía o acta. Puedes asociar varios al mismo ingreso.</p>
+          <button *ngIf="auth.can(702)" type="button" class="text-button" (click)="addDocument()">
+            <gui-icon name="Plus"></gui-icon>Agregar comprobante
+          </button>
+        </div>
+        <div class="registration-line" *ngFor="let doc of documents; let index = index">
+          <div class="section-heading">
+            <h4>Comprobante {{ index + 1 }}</h4>
+            <button
+              type="button"
+              class="icon-button action-danger"
+              [attr.aria-label]="'Quitar comprobante ' + (index + 1)"
+              (click)="documents.splice(index, 1)"
+            >
+              <gui-icon name="Trash2"></gui-icon>
+            </button>
+          </div>
+          <div class="form-grid">
+            <label
+              >Tipo *<select [name]="'doc-type-' + doc.key" [(ngModel)]="doc.typeId" required>
+                <option [ngValue]="null">Seleccionar…</option>
+                <option *ngFor="let type of documentTypes()" [ngValue]="type.id">
+                  {{ type.name }}
+                </option>
+              </select></label
+            ><label
+              >Serie y número *<input
+                [name]="'doc-number-' + doc.key"
+                [(ngModel)]="doc.number"
+                required
+                maxlength="60" /></label
+            ><label
+              >Fecha *<input
+                type="date"
+                [name]="'doc-date-' + doc.key"
+                [(ngModel)]="doc.date"
+                required
+            /></label>
+          </div>
+        </div>
+        <div *ngIf="effectiveInstitution && auth.can(701)" class="checkbox-list">
+          <label *ngFor="let doc of availableDocuments"
+            ><input
+              type="checkbox"
+              [checked]="documentIds.includes(doc.id)"
+              (change)="toggleDocument(doc.id)"
+            />{{ doc.type }} · {{ doc.number }}</label
+          ><button
+            *ngIf="moreDocuments"
+            type="button"
+            class="text-button"
+            (click)="loadDocuments()"
+            [disabled]="documentsLoading"
+          >
+            Buscar comprobantes ya registrados
+          </button>
+        </div>
+        <p class="cell-muted">Después de guardar puedes adjuntar fotos o PDF desde Documentos.</p>
+        <div class="accordion-next">
+          <button
+            type="button"
+            class="button secondary"
+            (click)="continueTo('documents', 'destination')"
+          >
+            Continuar con el destino
+          </button>
+        </div></gui-accordion
+      >
+      <gui-accordion
+        title="Destino y responsable"
+        summary="Ubicación inicial y responsable"
+        [open]="openSections.includes('destination')"
+        (toggle)="toggle('destination')"
+        ><div class="form-grid">
+          <div class="full-width">
+            <span>Ubicación inicial *</span
+            ><gui-location-picker
+              name="locationId"
+              label="Ubicación inicial"
+              [locations]="app.options('locations')"
+              [(ngModel)]="header.locationId"
+              [required]="true"
+            ></gui-location-picker>
+          </div>
+          <label
+            >Responsable<gui-search-select
+              name="responsibleId"
+              label="Responsable"
+              [options]="app.options('people')"
+              [(ngModel)]="header.responsibleId"
+            ></gui-search-select></label
+          ><label class="full-width"
+            >Observaciones<textarea
+              name="reason"
+              [(ngModel)]="header.reason"
+              maxlength="500"
+            ></textarea>
+          </label>
+        </div>
+        <div class="accordion-next">
+          <button
+            type="button"
+            class="button secondary"
+            (click)="continueTo('destination', 'review')"
+          >
+            Revisar registro
+          </button>
+        </div></gui-accordion
+      >
+      <section class="registration-review">
+        <h3>Revisa antes de registrar</h3>
+        <ul>
+          <li *ngFor="let line of lines">
+            <span>{{ line.name || 'Producto por completar' }}</span
+            ><strong>{{ line.quantity || 0 }} {{ units(line.quantity) }}</strong>
+          </li>
+        </ul>
+        <p>Cada unidad tendrá su código por tipo, QR y evento inicial en el Kardex.</p>
+        <small>Los códigos se asignan en el servidor al confirmar el registro.</small>
+      </section>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="button secondary" [disabled]="busy" (click)="cancel.emit()">
+        Cancelar</button
+      ><button type="submit" class="button primary" [disabled]="busy">
+        <gui-icon name="Check"></gui-icon
+        >{{ busy ? 'Registrando…' : 'Registrar ' + totals.quantity + ' ' + units(totals.quantity) }}
+      </button>
+    </div>
+  </div>
+</form>
+
+<gui-product-selector
+  *ngIf="modelPickerLineKey"
+  mode="model"
+  [providedRows]="modelChoices"
+  (picked)="chooseModel($event)"
+  (back)="modelPickerLineKey = null"
+></gui-product-selector>

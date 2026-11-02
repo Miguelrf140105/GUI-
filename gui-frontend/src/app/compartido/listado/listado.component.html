@@ -1,0 +1,560 @@
+<div *ngIf="error" class="alert error" role="alert">{{ error }}</div>
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">GESTIÓN UNIVERSITARIA <span>/</span> {{ current.label | uppercase }}</div>
+    <h1>{{ current.label }}</h1>
+    <p>{{ current.description }}</p>
+  </div>
+  <div class="heading-actions">
+    <button *ngIf="moduleId === 30" class="button secondary" (click)="qrSelectorOpen = true">
+      <gui-icon name="Printer"></gui-icon>Imprimir QR
+    </button>
+    <button
+      class="button secondary"
+      (click)="exportRows()"
+      [disabled]="exporting || loading || !filtered.length"
+      title="Exporta solo los resultados de la página actual que coincidan con la búsqueda y los filtros"
+    >
+      <gui-icon name="Download"></gui-icon
+      >{{ exporting ? 'Generando Excel…' : 'Exportar a Excel' }}</button
+    ><button
+      *ngIf="current.action && writable"
+      class="button primary"
+      (click)="open(createKind[moduleId])"
+    >
+      <gui-icon name="Plus"></gui-icon>{{ current.action }}
+    </button>
+  </div>
+</div>
+<gui-loading *ngIf="loading"></gui-loading
+><ng-container *ngIf="!loading"
+  ><div *ngIf="moduleId === 70" class="module-callout">
+    <gui-icon name="FileText"></gui-icon>
+    <div>
+      <strong>Un comprobante, varios productos.</strong>
+      <p>Registra factura, boleta, guía o acta una sola vez y vincúlala al ingreso.</p>
+    </div>
+    <a *ngIf="auth.can(1301)" class="button secondary" routerLink="/proveedores">Proveedores</a>
+  </div>
+  <form *ngIf="moduleId === 30" class="module-callout" (ngSubmit)="findAsset()">
+    <div>
+      <strong>Consultar activo por QR o código</strong>
+      <p>Pega el QR, escribe el código o ID, o utiliza un lector USB y pulsa Enter.</p>
+    </div>
+    <div class="inline-actions">
+      <input
+        aria-label="ID, código o QR del activo"
+        name="assetSearch"
+        [(ngModel)]="assetSearch"
+        placeholder="LAP-000001"
+        required
+      /><button type="submit" class="button secondary">
+        <gui-icon name="Search"></gui-icon>Abrir ficha
+      </button>
+      <button
+        type="button"
+        class="button secondary"
+        (click)="pickerAction = 'view'; actionPickerOpen = true"
+      >
+        <gui-icon name="Search"></gui-icon>Buscar producto
+      </button>
+      <button type="button" class="button secondary" (click)="scannerOpen = true">
+        <gui-icon name="QrCode"></gui-icon>Escanear QR
+      </button>
+    </div>
+  </form>
+  <div *ngIf="moduleId === 130" class="hierarchy-note">
+    <gui-icon name="Building2"></gui-icon>
+    <div>
+      <strong>Una contraparte, varios documentos y operaciones</strong
+      ><span
+        >El mismo registro puede actuar como proveedor, donante o institución destinataria.
+        Inactivarlo conserva su historia.</span
+      >
+    </div>
+  </div>
+  <div *ngIf="moduleId === 140" class="hierarchy-note">
+    <gui-icon name="FileText"></gui-icon>
+    <div>
+      <strong>Productos y comprobantes de cada recepción</strong
+      ><span
+        >Cada recepción incluye unidades, códigos y documentos. Aquí puedes consultar su
+        detalle.</span
+      >
+    </div>
+  </div>
+  <div *ngIf="moduleId === 150" class="hierarchy-note">
+    <gui-icon name="FileText"></gui-icon>
+    <div>
+      <strong>Salidas definitivas confirmadas</strong
+      ><span
+        >Cada egreso conserva sus unidades y documentos. Las solicitudes se gestionan en
+        Movimientos.</span
+      >
+    </div>
+    <a *ngIf="auth.can(401)" class="button secondary" routerLink="/movimientos">Ver movimientos</a>
+  </div>
+  <div *ngIf="moduleId === 100" class="hierarchy-note">
+    <gui-icon name="ShieldCheck"></gui-icon>
+    <div>
+      <strong>Permisos por acción y alcance por ubicación</strong
+      ><span>Los roles definen las acciones; cada usuario tiene ubicaciones autorizadas.</span>
+    </div>
+  </div>
+  <section *ngIf="moduleId === 50" class="panel" style="padding: 20px; margin-bottom: 16px">
+    <h2>Explorar por sede, piso y ambiente</h2>
+    <gui-location-picker
+      [locations]="locationTree"
+      label="Explorar ubicaciones"
+      [autoSelectBranch]="true"
+      [(ngModel)]="locationFilterId"
+    ></gui-location-picker>
+  </section>
+  <gui-location-tree
+    *ngIf="moduleId === 50"
+    [locations]="visibleLocationTree"
+    [editable]="auth.can(502) && auth.can(504)"
+    [creatable]="auth.can(502)"
+    [deletable]="auth.can(503)"
+    (remove)="requestLocationDelete($event)"
+    (edit)="open('location', $event)"
+    (createChild)="newLocationUnder($event)"
+  ></gui-location-tree>
+  <div *ngIf="moduleId === 110 && auth.can(1102)" class="inline-actions config-actions">
+    <button class="button secondary" (click)="open('family')">
+      <gui-icon name="FolderTree"></gui-icon>Crear tipo de producto</button
+    ><span>Las características se configuran por tipo de producto.</span>
+  </div>
+  <section class="panel table-panel">
+    <div class="table-toolbar">
+      <div class="search-box">
+        <gui-icon name="Search"></gui-icon
+        ><input
+          aria-label="Buscar en la página actual"
+          [(ngModel)]="query"
+          [placeholder]="'Buscar en ' + current.label.toLowerCase() + '…'"
+        />
+      </div>
+      <div class="toolbar-right" [class.egress-filters]="moduleId === 150">
+        <ng-container *ngIf="moduleId === 150">
+          <select aria-label="Tipo de egreso" [(ngModel)]="egressType">
+            <option value="">Todos los tipos</option>
+            <option value="4">Donación entregada</option>
+            <option value="7">Baja definitiva</option>
+          </select>
+          <label
+            >Desde <input type="date" aria-label="Egresos desde" [(ngModel)]="dateFrom"
+          /></label>
+          <label>Hasta <input type="date" aria-label="Egresos hasta" [(ngModel)]="dateTo" /></label>
+        </ng-container>
+        <button
+          *ngIf="moduleId === 30 && (hasColumnFilters || query || filter)"
+          class="text-button"
+          (click)="clearInventoryFilters()"
+        >
+          Limpiar filtros
+        </button>
+        <select
+          *ngIf="[40, 110].includes(moduleId)"
+          aria-label="Filtrar registros"
+          [(ngModel)]="filter"
+        >
+          <option value="">
+            {{ moduleId === 110 ? 'Todos los grupos' : 'Todos los estados' }}
+          </option>
+          <option *ngFor="let item of filters" [value]="item.id">{{ item.name }}</option></select
+        ><button class="icon-button" aria-label="Actualizar" (click)="load()">
+          <gui-icon name="RefreshCw"></gui-icon>
+        </button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th *ngFor="let column of columns" scope="col">
+              {{ column.label }}
+              <input
+                *ngIf="moduleId === 30"
+                class="column-search"
+                [attr.aria-label]="'Filtrar por ' + column.label"
+                [placeholder]="'Buscar…'"
+                [(ngModel)]="columnQueries[column.key]"
+                autocomplete="off"
+              />
+            </th>
+            <th class="actions-column">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of filtered">
+            <td
+              *ngFor="let column of columns"
+              [class.product-name-cell]="moduleId === 30 && column.key === 'name'"
+            >
+              <gui-product-thumbnail
+                *ngIf="moduleId === 30 && column.key === 'name'"
+                [photoId]="row.photoId"
+                [label]="row.name"
+              ></gui-product-thumbnail>
+              <gui-badge *ngIf="column.key === 'status'" [value]="row.status"></gui-badge
+              ><ng-container *ngIf="column.key === 'date'">{{
+                row.date | date : 'dd MMM yyyy'
+              }}</ng-container
+              ><ng-container *ngIf="column.key !== 'status' && column.key !== 'date'"
+                ><span [class.code]="column.key === 'code'">{{ row[column.key] ?? '—' }}</span
+                ><small
+                  *ngIf="column.key === 'name' && moduleId === 30 && row.movementStatus"
+                  class="transit-text"
+                  >{{ row.movementStatus }}</small
+                ></ng-container
+              >
+            </td>
+            <td>
+              <div class="row-actions">
+                <ng-container *ngIf="moduleId === 30"
+                  ><button [attr.aria-label]="'Ver ' + row.code" (click)="selected = row">
+                    <gui-icon name="Eye"></gui-icon></button
+                  ><button [attr.aria-label]="'QR de ' + row.code" (click)="open('qr', row)">
+                    <gui-icon name="QrCode"></gui-icon></button></ng-container
+                ><button
+                  *ngIf="moduleId === 30 && auth.can(302) && auth.can(504)"
+                  [attr.aria-label]="'Editar nombre de ' + row.code"
+                  (click)="open('asset-name', row)"
+                >
+                  <gui-icon name="Pencil"></gui-icon></button
+                ><button
+                  class="action-danger"
+                  *ngIf="moduleId === 30 && auth.can(304)"
+                  [attr.aria-label]="'Eliminar activo ' + row.code"
+                  (click)="requestAssetDelete(row)"
+                >
+                  <gui-icon name="Trash2"></gui-icon></button
+                ><button
+                  *ngIf="canEdit(row)"
+                  [attr.aria-label]="'Editar ' + row.name"
+                  (click)="open(createKind[moduleId], row)"
+                >
+                  <gui-icon name="Pencil"></gui-icon></button
+                ><button
+                  class="action-danger"
+                  *ngIf="canDeleteProvider(row)"
+                  [attr.aria-label]="'Eliminar proveedor ' + row.name"
+                  title="Eliminar proveedor"
+                  (click)="requestProviderDelete(row)"
+                >
+                  <gui-icon name="Trash2"></gui-icon></button
+                ><button
+                  class="action-danger"
+                  *ngIf="moduleId === 140 && auth.can(1403) && row.stateId !== 2"
+                  [attr.aria-label]="'Eliminar ingreso ' + row.code"
+                  (click)="open('intake-delete', row)"
+                >
+                  <gui-icon name="Trash2"></gui-icon></button
+                ><button
+                  *ngIf="moduleId === 150"
+                  [attr.aria-label]="'Ver egreso ' + row.code"
+                  (click)="open('egress-detail', row)"
+                >
+                  <gui-icon name="Eye"></gui-icon></button
+                ><button
+                  *ngIf="moduleId === 140"
+                  [attr.aria-label]="'Ver ingreso ' + row.id"
+                  (click)="open('intake-detail', row)"
+                >
+                  <gui-icon name="Eye"></gui-icon></button
+                ><button
+                  *ngIf="moduleId === 70"
+                  [attr.aria-label]="'Adjuntos de ' + row.number"
+                  (click)="open('files', row)"
+                >
+                  <gui-icon name="FileText"></gui-icon></button
+                ><ng-container *ngIf="moduleId === 40"
+                  ><button
+                    *ngIf="
+                      row.stateId === 201 && auth.can(403) && (!row.definitive || auth.can(504))
+                    "
+                    class="small-action"
+                    [disabled]="transitionBusy(row.id)"
+                    (click)="transition(row, 'authorize')"
+                  >
+                    Autorizar</button
+                  ><button
+                    *ngIf="
+                      row.stateId === 204 && auth.can(404) && (!row.definitive || auth.can(504))
+                    "
+                    class="small-action"
+                    [disabled]="transitionBusy(row.id)"
+                    (click)="transition(row, 'dispatch')"
+                  >
+                    Despachar</button
+                  ><button
+                    *ngIf="
+                      row.stateId === 202 && auth.can(405) && (!row.definitive || auth.can(504))
+                    "
+                    class="small-action"
+                    [disabled]="transitionBusy(row.id)"
+                    (click)="transition(row, 'receive')"
+                  >
+                    {{ row.definitive ? 'Confirmar salida' : 'Recibir' }}
+                  </button></ng-container
+                ><span
+                  *ngIf="![30, 40, 50, 70, 90, 100, 130, 140, 150].includes(moduleId)"
+                  class="cell-muted"
+                  >Consulta</span
+                >
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <gui-empty
+      *ngIf="!filtered.length"
+      [text]="
+        query || filter || egressType || dateFrom || dateTo || hasColumnFilters
+          ? 'Sin coincidencias'
+          : 'Aún no hay registros'
+      "
+      [detail]="
+        moduleId === 150
+          ? 'Las donaciones y bajas aparecerán al confirmar su salida en Movimientos.'
+          : 'Los registros de este módulo aparecerán aquí.'
+      "
+    ></gui-empty>
+    <div class="pagination">
+      <span>{{ filtered.length }} registros en esta página</span>
+      <div>
+        <button
+          class="icon-button"
+          aria-label="Página anterior"
+          [disabled]="index === 0"
+          (click)="page(index - 1)"
+        >
+          <gui-icon name="ChevronLeft"></gui-icon></button
+        ><span class="page-number">{{ index + 1 }}</span
+        ><button
+          class="icon-button"
+          aria-label="Página siguiente"
+          [disabled]="!result.hasMore"
+          (click)="page(index + 1)"
+        >
+          <gui-icon name="ChevronRight"></gui-icon>
+        </button>
+      </div>
+    </div></section
+></ng-container>
+<gui-modal *ngIf="modal" [title]="modalTitle" [busy]="modalBusy" (close)="close()"
+  ><gui-inventario-registro
+    *ngIf="modal.kind === 'inventory'"
+    (busyChange)="modalBusy = $event"
+    (cancel)="close()"
+    (saved)="saved($event)"
+  ></gui-inventario-registro>
+  <gui-location-create
+    *ngIf="modal.kind === 'location' && !modal.row"
+    [locations]="locationTree"
+    [contextParentId]="modal.parentId ?? null"
+    (busyChange)="modalBusy = $event"
+    (cancel)="close()"
+    (saved)="saved()"
+  ></gui-location-create>
+  <gui-asset-name
+    *ngIf="modal.kind === 'asset-name'"
+    [asset]="modal.row || {}"
+    (busyChange)="modalBusy = $event"
+    (cancel)="close()"
+    (saved)="saved()"
+  ></gui-asset-name>
+  <div class="modal-body" *ngIf="modal.kind === 'qr'">
+    <gui-qr [asset]="modal.row || {}"></gui-qr>
+  </div>
+  <div class="modal-body" *ngIf="modal.kind === 'files'">
+    <gui-archivos
+      [parent]="{ documentId: modal.row?.id }"
+      [canUpload]="auth.can(702)"
+    ></gui-archivos>
+  </div>
+  <gui-egreso-detalle
+    *ngIf="modal.kind === 'egress-detail'"
+    [row]="modal.row || {}"
+    (busyChange)="modalBusy = $event"
+  ></gui-egreso-detalle>
+  <gui-intake-delete
+    *ngIf="modal.kind === 'intake-delete'"
+    [row]="modal.row || {}"
+    (busyChange)="modalBusy = $event"
+    (cancel)="close()"
+    (saved)="saved()"
+  ></gui-intake-delete>
+  <gui-ingreso-detalle
+    *ngIf="modal.kind === 'intake-detail'"
+    [row]="modal.row || {}"
+  ></gui-ingreso-detalle
+  ><gui-editor
+    *ngIf="
+      !['inventory', 'qr', 'files', 'intake-detail', 'asset-name', 'intake-delete'].includes(
+        modal.kind
+      ) &&
+      (modal.kind !== 'location' || modal.row)
+    "
+    [kind]="modal.kind"
+    [initialAsset]="modal.asset"
+    [initialAssets]="modal.assets || []"
+    [row]="modal.row"
+    (busyChange)="modalBusy = $event"
+    (cancel)="close()"
+    (saved)="saved()"
+  ></gui-editor></gui-modal
+><gui-ficha
+  *ngIf="selected"
+  [asset]="selected"
+  (close)="selected = null"
+  (photosChanged)="load()"
+  (qr)="open('qr', $event)"
+></gui-ficha>
+<gui-modal *ngIf="scannerOpen" title="Escanear QR del activo" (close)="scannerOpen = false">
+  <gui-qr-scanner (read)="scanned($event)"></gui-qr-scanner>
+</gui-modal>
+
+<gui-modal *ngIf="printAssets.length" title="Imprimir etiquetas QR" (close)="printAssets = []"
+  ><div class="modal-body"><gui-qr [assets]="printAssets"></gui-qr></div
+></gui-modal>
+
+<gui-modal *ngIf="qrSelectorOpen" title="Imprimir etiquetas QR" (close)="qrSelectorOpen = false"
+  ><gui-qr-selector></gui-qr-selector
+></gui-modal>
+
+<gui-modal
+  *ngIf="actionPickerOpen"
+  title="Buscar producto para una acción"
+  (close)="actionPickerOpen = false"
+>
+  <div class="asset-action-choice">
+    <label
+      >¿Qué deseas hacer?<select [(ngModel)]="pickerAction">
+        <option value="view">Consultar ficha e historial</option>
+        <option value="qr">Ver e imprimir QR individual</option>
+        <option *ngIf="auth.can(302) && auth.can(504)" value="edit">Editar solo el nombre</option>
+        <option *ngIf="auth.can(402)" value="movement">Registrar movimiento</option>
+        <option *ngIf="auth.can(602)" value="maintenance">Programar mantenimiento</option>
+      </select></label
+    >
+  </div>
+  <gui-product-selector
+    mode="asset"
+    [purpose]="pickerAction"
+    (pickedMany)="chooseManyForAction($event)"
+    (picked)="chooseForAction($event)"
+    (back)="actionPickerOpen = false"
+  ></gui-product-selector>
+</gui-modal>
+
+<gui-modal
+  *ngIf="locationDelete"
+  title="Eliminar ubicación"
+  [busy]="locationDeleteBusy"
+  (close)="locationDelete = null"
+>
+  <div class="modal-body location-delete-copy">
+    <h3>¿Eliminar {{ locationDelete.name }}?</h3>
+    <p>Se retirará de las ubicaciones disponibles. Su código y su historial se conservarán.</p>
+    <p>
+      Solo se puede eliminar si no contiene otros espacios, activos, movimientos pendientes ni
+      alcances de usuarios asociados. No se eliminarán ubicaciones hijas automáticamente.
+    </p>
+    <p
+      class="location-delete-warning"
+      role="alert"
+      *ngIf="locationDeleteBlock || locationDeleteError"
+    >
+      {{ locationDeleteBlock || locationDeleteError }}
+    </p>
+  </div>
+  <div class="modal-footer">
+    <button
+      class="button secondary"
+      [disabled]="locationDeleteBusy"
+      (click)="locationDelete = null"
+    >
+      Cancelar
+    </button>
+    <button
+      class="button primary location-delete-confirm action-danger"
+      [disabled]="locationDeleteBusy || !!locationDeleteBlock"
+      (click)="deleteLocation()"
+    >
+      <gui-icon name="Trash2"></gui-icon>
+      {{ locationDeleteBusy ? 'Eliminando…' : 'Eliminar ubicación' }}
+    </button>
+  </div>
+</gui-modal>
+
+<gui-modal
+  *ngIf="providerDelete"
+  title="Eliminar proveedor"
+  [busy]="providerDeleteBusy"
+  (close)="providerDelete = null"
+>
+  <div class="modal-body location-delete-copy">
+    <h3>¿Eliminar {{ providerDelete.name }}?</h3>
+    <p>
+      RUC / identificación: <strong>{{ providerDelete.document }}</strong>
+    </p>
+    <p>Se retirará del listado y no podrá seleccionarse para nuevas operaciones.</p>
+    <p>
+      Es un borrado lógico: el proveedor seguirá almacenado en la base de datos. Sus ingresos,
+      documentos, movimientos anteriores e historial se conservarán.
+    </p>
+    <p *ngIf="providerDeleteError" class="location-delete-warning" role="alert">
+      {{ providerDeleteError }}
+    </p>
+  </div>
+  <div class="modal-footer">
+    <button
+      class="button secondary"
+      [disabled]="providerDeleteBusy"
+      (click)="providerDelete = null"
+    >
+      Cancelar
+    </button>
+    <button
+      class="button primary location-delete-confirm action-danger"
+      [disabled]="providerDeleteBusy"
+      (click)="deleteProvider()"
+    >
+      <gui-icon name="Trash2"></gui-icon
+      >{{ providerDeleteBusy ? 'Eliminando…' : 'Eliminar proveedor' }}
+    </button>
+  </div>
+</gui-modal>
+
+<gui-modal
+  *ngIf="assetDelete"
+  title="Eliminar registro de activo"
+  [busy]="assetDeleteBusy"
+  (close)="assetDelete = null"
+>
+  <div class="modal-body asset-delete-copy">
+    <div *ngIf="assetDeleteError" class="alert error" role="alert">{{ assetDeleteError }}</div>
+    <p>
+      ¿Eliminar el registro de <strong>{{ assetDelete.name }}</strong> ({{ assetDelete.code }})?
+    </p>
+    <p>
+      Dejará de aparecer en el inventario. Si ya tiene movimientos o mantenimiento, no se podrá
+      eliminar.
+    </p>
+  </div>
+  <div class="modal-footer">
+    <button class="button secondary" [disabled]="assetDeleteBusy" (click)="assetDelete = null">
+      Cancelar
+    </button>
+    <button
+      class="button primary asset-delete-confirm action-danger"
+      [disabled]="assetDeleteBusy"
+      (click)="deleteAsset()"
+    >
+      {{ assetDeleteBusy ? 'Eliminando…' : 'Eliminar registro' }}
+    </button>
+  </div>
+</gui-modal>

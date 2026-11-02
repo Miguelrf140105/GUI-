@@ -1,0 +1,14 @@
+<nav aria-label="Módulos del sistema">
+  <ng-container *ngFor="let item of items"
+    ><ng-container *ngIf="auth.can(item.id * 10 + 1)"
+      ><div *ngIf="item.id === 90" class="nav-section">ADMINISTRACIÓN</div>
+      <a
+        class="nav-item"
+        [routerLink]="'/' + paths[item.id]"
+        routerLinkActive="active"
+        (click)="layout.mobile = false"
+        ><gui-icon [name]="item.icon"></gui-icon><span>{{ item.label }}</span></a
+      ></ng-container
+    ></ng-container
+  >
+</nav>

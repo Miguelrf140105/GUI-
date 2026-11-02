@@ -1,0 +1,30 @@
+<div
+  class="modal-overlay"
+  (mousedown)="onBackdropMouseDown($event)"
+>
+  <section
+    class="modal"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="title"
+    tabindex="-1"
+    #dialog
+  >
+    <header class="modal-header">
+      <div>
+        <span class="eyebrow">GUI · GESTIÓN DE INVENTARIO</span>
+        <h2>{{ title }}</h2>
+      </div>
+      <button
+        type="button"
+        class="icon-button"
+        aria-label="Cerrar ventana"
+        [disabled]="busy"
+        (click)="close.emit()"
+      >
+        <gui-icon name="X"></gui-icon>
+      </button>
+    </header>
+    <ng-content></ng-content>
+  </section>
+</div>

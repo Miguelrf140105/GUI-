@@ -1,0 +1,69 @@
+<div class="modal-body">
+  <ng-content></ng-content>
+  <div *ngIf="error" class="alert error">{{ error }}</div>
+  <gui-loading *ngIf="!detail && !error"></gui-loading
+  ><ng-container *ngIf="detail"
+    ><div class="form-note">
+      <gui-icon name="Building2"></gui-icon
+      ><span
+        ><strong>Ingreso {{ code }} · {{ row.institution }}</strong
+        ><br />{{ row.type }} · {{ row.date | date : 'dd MMM yyyy' }}</span
+      >
+    </div>
+    <section class="form-section">
+      <h3>Productos recibidos</h3>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Recibidas</th>
+              <th>Activos registrados</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let line of detail.lines">
+              <td>{{ line.name }}</td>
+              <td>{{ line.quantity }}</td>
+              <td>{{ line.registered }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="form-section" *ngIf="detail.units">
+      <h3>Unidades del ingreso · {{ detail.units.length }}</h3>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Código patrimonial</th>
+              <th>Producto</th>
+              <th>Serie</th>
+              <th>Ubicación actual</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let unit of detail.units">
+              <td class="code">{{ unit.code }}</td>
+              <td>{{ unit.name }}</td>
+              <td>{{ unit.serial || '—' }}</td>
+              <td>{{ unit.location || '—' }}</td>
+              <td>{{ unit.status }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="form-section">
+      <h3>Comprobantes asociados</h3>
+      <ul>
+        <li *ngFor="let doc of detail.documents">
+          {{ doc.type }} · {{ doc.number }} · {{ doc.date | date : 'dd MMM yyyy' }}
+        </li>
+      </ul>
+      <p *ngIf="!detail.documents.length">Este ingreso no tiene comprobantes asociados.</p>
+    </section></ng-container
+  >
+</div>

@@ -1,0 +1,16 @@
+<section class="registration-accordion" [ngClass]="product ? 'registration-line' : 'form-section'">
+  <div class="registration-accordion-header">
+    <button
+      type="button"
+      class="registration-accordion-toggle"
+      [attr.aria-expanded]="open"
+      (click)="toggle.emit()"
+    >
+      <span
+        ><strong>{{ title }}</strong
+        ><small>{{ summary }}</small></span
+      ><gui-icon name="ChevronDown"></gui-icon>
+    </button>
+  </div>
+  <div class="registration-accordion-body" [hidden]="!open"><ng-content></ng-content></div>
+</section>

@@ -1,0 +1,21 @@
+<div class="app-shell">
+  <button
+    *ngIf="layout.mobile"
+    class="nav-scrim"
+    aria-label="Cerrar menú"
+    (click)="layout.mobile = false"
+  ></button
+  ><app-sidebar></app-sidebar>
+  <div class="main-shell">
+    <app-topbar></app-topbar>
+    <main>
+      <div *ngIf="app.error" class="alert error" role="alert">
+        {{ app.error }}<button aria-label="Cerrar error" (click)="app.error = ''">×</button>
+      </div>
+      <div *ngIf="app.notice" class="toast" role="status">
+        <gui-icon name="CheckCircle2"></gui-icon>{{ app.notice }}
+      </div>
+      <router-outlet></router-outlet><app-footer></app-footer>
+    </main>
+  </div>
+</div>

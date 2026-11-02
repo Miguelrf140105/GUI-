@@ -1,0 +1,137 @@
+<form #locationForm="ngForm" class="editor-form" (ngSubmit)="submit(locationForm)">
+  <div class="modal-body" [attr.inert]="busy ? '' : null">
+    <div *ngIf="error" role="alert" class="alert error">{{ error }}</div>
+    <div class="location-create-intro">
+      <h3>Organiza el nuevo espacio</h3>
+      <p>Indica qué vas a crear y dónde estará. El código se asigna automáticamente.</p>
+    </div>
+    <div class="location-create-levels" role="group" aria-label="Qué deseas crear">
+      <button
+        *ngFor="let option of levels"
+        type="button"
+        [class.active]="level === option.id"
+        [attr.aria-pressed]="level === option.id"
+        (click)="setLevel($any(option.id))"
+      >
+        {{ option.name }}
+      </button>
+    </div>
+    <section *ngIf="level !== 'site'" class="location-create-section">
+      <h4>¿Dónde se creará?</h4>
+      <div class="form-grid">
+        <label *ngIf="sites.length"
+          >Sede *<gui-search-select
+            name="siteId"
+            label="Sede del nuevo espacio"
+            [options]="sites"
+            [(ngModel)]="siteId"
+            (ngModelChange)="siteChanged()"
+            [required]="true"
+          ></gui-search-select
+        ></label>
+        <label *ngIf="level !== 'floor' && (floors.length || sites.length)"
+          >Piso *<select
+            name="floorId"
+            [(ngModel)]="floorId"
+            (ngModelChange)="floorChanged()"
+            required
+          >
+            <option [ngValue]="null">Seleccionar piso…</option>
+            <option *ngFor="let floor of floors" [ngValue]="floor.id">{{ floor.name }}</option>
+            <option *ngIf="siteId !== null" [ngValue]="0">
+              Sin piso · directamente en la sede
+            </option>
+          </select></label
+        >
+        <label *ngIf="level === 'subroom'" class="full-width"
+          >Dentro del ambiente *<gui-search-select
+            name="roomId"
+            label="Ambiente superior del nuevo subambiente"
+            [options]="rooms"
+            [(ngModel)]="roomId"
+            [required]="true"
+          ></gui-search-select
+        ></label>
+      </div>
+    </section>
+    <section class="location-create-section">
+      <h4>
+        {{
+          level === 'site'
+            ? 'Datos de la nueva sede'
+            : level === 'floor'
+            ? 'Datos del nuevo piso'
+            : level === 'subroom'
+            ? 'Datos del nuevo subambiente'
+            : 'Datos del nuevo ambiente'
+        }}
+      </h4>
+      <div class="form-grid">
+        <label *ngIf="level === 'floor'; else spaceName"
+          >Número de piso *<input
+            type="number"
+            name="floorNumber"
+            [(ngModel)]="floorNumber"
+            min="1"
+            max="999"
+            step="1"
+            required
+          /><small
+            >Nombre automático:
+            {{ floorNumber ? 'Piso ' + floorNumber : 'indica el número' }}</small
+          ></label
+        >
+        <ng-template #spaceName
+          ><label class="full-width"
+            >{{ level === 'site' ? 'Nombre de la sede' : 'Nombre del espacio' }} *<input
+              name="locationName"
+              [(ngModel)]="name"
+              maxlength="150"
+              required
+              [placeholder]="
+                level === 'site' ? 'Ej.: Sede norte' : 'Ej.: Aula 901 o Laboratorio de biología'
+              " /></label
+        ></ng-template>
+        <label *ngIf="level === 'room' || level === 'subroom'" class="full-width"
+          >Uso del espacio *<gui-search-select
+            name="spaceType"
+            label="Uso del nuevo espacio"
+            [options]="spaceTypes"
+            [(ngModel)]="typeId"
+            [required]="true"
+          ></gui-search-select
+        ></label>
+      </div>
+    </section>
+    <section class="location-create-responsible">
+      <span>Responsable</span
+      ><strong>{{ level === 'site' ? 'Opcional' : inheritedResponsible }}</strong
+      ><small *ngIf="level !== 'site'">Se hereda de la ubicación superior.</small
+      ><label class="location-create-toggle"
+        ><input type="checkbox" name="overrideResponsible" [(ngModel)]="overrideResponsible" />{{
+          level === 'site' ? 'Asignar responsable' : 'Asignar un responsable distinto'
+        }}</label
+      ><gui-search-select
+        *ngIf="overrideResponsible"
+        name="responsibleId"
+        label="Responsable del nuevo espacio"
+        [options]="app.options('people')"
+        [(ngModel)]="responsibleId"
+        [required]="true"
+      ></gui-search-select>
+    </section>
+    <div class="location-create-preview">
+      <small>Así quedará ubicado</small><strong>{{ previewPath }}</strong
+      ><span
+        ><gui-icon name="LockKeyhole" [size]="13"></gui-icon>Código único generado al guardar</span
+      >
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="button secondary" [disabled]="busy" (click)="cancel.emit()">
+      Cancelar</button
+    ><button type="submit" class="button primary" [disabled]="busy">
+      {{ busy ? 'Creando…' : 'Crear espacio' }}
+    </button>
+  </div>
+</form>

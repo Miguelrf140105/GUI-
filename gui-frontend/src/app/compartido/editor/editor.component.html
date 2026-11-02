@@ -1,0 +1,183 @@
+<form *ngIf="!assetPickerOpen" #editor="ngForm" (ngSubmit)="submit(editor)" class="editor-form">
+  <div class="modal-body" [attr.inert]="busy ? '' : null">
+    <div *ngIf="error" class="alert error" role="alert">{{ error }}</div>
+    <div class="form-grid">
+      <div *ngFor="let field of fields" [class.full-width]="field.wide">
+        <ng-container *ngIf="field.type === 'asset'; else locationField">
+          <span>{{ field.label }} *</span
+          ><input type="hidden" [name]="field.key" [(ngModel)]="form[field.key]" required />
+          <div class="asset-pick-summary">
+            <ng-container *ngIf="kind === 'movement' && chosenAssets.length"
+              ><strong>{{ chosenAssets.length }} activos para el movimiento</strong>
+              <div class="movement-asset-chips">
+                <button
+                  type="button"
+                  *ngFor="let asset of chosenAssets"
+                  [attr.aria-label]="'Quitar del movimiento ' + asset.code"
+                  (click)="removeAsset(asset.id)"
+                >
+                  {{ asset.code }} ×
+                </button>
+              </div>
+              <small
+                >Un destino y motivo comunes. Cada activo tendrá un movimiento y un evento de
+                solicitud propios. La ubicación cambiará al completar la recepción de cada
+                movimiento.</small
+              ></ng-container
+            >
+            <div *ngIf="chosenAsset && kind !== 'movement'">
+              <strong>{{ chosenAsset.code }} · {{ chosenAsset.name }}</strong
+              ><small>{{ chosenAsset.location || 'Sin ubicación' }}</small>
+            </div>
+            <button type="button" class="button secondary" (click)="assetPickerOpen = true">
+              <gui-icon name="Search"></gui-icon
+              >{{
+                chosenAsset
+                  ? kind === 'movement'
+                    ? 'Añadir o cambiar activos'
+                    : 'Cambiar activo'
+                  : 'Buscar producto o código'
+              }}
+            </button>
+          </div>
+        </ng-container>
+        <ng-template #locationField
+          ><ng-container *ngIf="field.type === 'location'; else standardField">
+            <span>{{ field.label }}<span *ngIf="field.required" class="required">*</span></span>
+            <gui-location-picker
+              [locations]="field.options || []"
+              [label]="field.label"
+              [name]="field.key"
+              [(ngModel)]="form[field.key]"
+              [required]="!!field.required"
+            ></gui-location-picker> </ng-container
+        ></ng-template>
+        <ng-template #standardField
+          ><label
+            >{{ field.label }}<span *ngIf="field.required" class="required">*</span>
+            <select
+              *ngIf="field.type === 'select'"
+              [name]="field.key"
+              [(ngModel)]="form[field.key]"
+              [required]="!!field.required"
+            >
+              <option [ngValue]="null">Seleccionar…</option>
+              <option *ngFor="let item of field.options" [ngValue]="item.id">
+                {{ item.name }}
+              </option>
+            </select>
+            <textarea
+              *ngIf="field.type === 'textarea'"
+              [name]="field.key"
+              [(ngModel)]="form[field.key]"
+              [required]="!!field.required"
+              [attr.maxlength]="field.max"
+              rows="3"
+            ></textarea>
+            <input
+              *ngIf="field.type !== 'select' && field.type !== 'textarea'"
+              [type]="field.type || 'text'"
+              [readonly]="!!field.readonly"
+              [email]="field.type === 'email'"
+              [name]="field.key"
+              [(ngModel)]="form[field.key]"
+              [required]="!!field.required"
+              [attr.maxlength]="field.max"
+              [minlength]="field.type === 'password' ? 14 : null"
+              [attr.autocomplete]="field.type === 'password' ? 'new-password' : null"
+            /> </label
+        ></ng-template>
+      </div>
+    </div>
+    <section *ngIf="kind === 'role'" class="form-section">
+      <h3>Permisos del rol</h3>
+      <p>
+        Editar y eliminar registros, y administrar usuarios y roles, está reservado al rol
+        Administrador. Estos permisos no se delegan a otros perfiles.
+      </p>
+      <div class="permissions-grid">
+        <fieldset *ngFor="let group of permissionGroups">
+          <legend>{{ group }}</legend>
+          <label *ngFor="let permission of permissions(group)"
+            ><input
+              type="checkbox"
+              [checked]="form.permissionIds.includes(permission.id)"
+              [disabled]="[303, 304, 503, 504, 902, 1002, 1303, 1403, 1502].includes(permission.id)"
+              (change)="toggle('permissionIds', permission.id)"
+            />{{ permission.name }}</label
+          >
+        </fieldset>
+      </div>
+    </section>
+    <ng-container *ngIf="kind === 'user'"
+      ><section class="form-section">
+        <h3>Roles asignados</h3>
+        <div class="checkbox-list">
+          <label *ngFor="let role of app.options('roles')"
+            ><input
+              type="checkbox"
+              [checked]="form.roleIds.includes(role.id)"
+              (change)="toggle('roleIds', role.id)"
+            />{{ role.name }}</label
+          >
+        </div>
+      </section>
+      <section class="form-section">
+        <h3>Alcance de acceso</h3>
+        <label
+          ><input type="checkbox" name="globalScope" [(ngModel)]="form.globalScope" />Todas las
+          sedes y ubicaciones</label
+        >
+        <div *ngIf="!form.globalScope" class="location-scope" style="display: grid; gap: 12px">
+          <gui-location-picker
+            [locations]="app.options('locations')"
+            label="Ubicación autorizada"
+            name="scopeLocationId"
+            [(ngModel)]="scopeLocationId"
+          ></gui-location-picker>
+          <button
+            type="button"
+            class="button secondary"
+            [disabled]="scopeLocationId === null"
+            (click)="addScope()"
+          >
+            Agregar al alcance
+          </button>
+          <div *ngFor="let id of form.locationIds" class="inline-actions">
+            <span>{{ path(id) }}</span>
+            <button type="button" class="text-button" (click)="toggle('locationIds', id)">
+              Quitar {{ path(id) }}
+            </button>
+          </div>
+        </div>
+      </section></ng-container
+    >
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="button secondary" [disabled]="busy" (click)="cancel.emit()">
+      Cancelar</button
+    ><button
+      class="button primary"
+      [disabled]="busy || !ready || (kind === 'movement' && !chosenAssets.length)"
+    >
+      <gui-icon name="Check"></gui-icon
+      >{{
+        busy
+          ? 'Guardando…'
+          : kind === 'movement'
+          ? 'Registrar ' + chosenAssets.length + ' movimientos'
+          : 'Guardar registro'
+      }}
+    </button>
+  </div>
+</form>
+
+<gui-product-selector
+  *ngIf="assetPickerOpen"
+  mode="asset"
+  [purpose]="kind"
+  [initialSelection]="chosenAssets"
+  (pickedMany)="chooseAssets($event)"
+  (picked)="chooseAsset($event)"
+  (back)="assetPickerOpen = false"
+></gui-product-selector>

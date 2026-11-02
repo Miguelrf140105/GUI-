@@ -1,0 +1,231 @@
+<ng-container *ngIf="!preview.length; else labelPreview">
+  <div class="modal-body qr-select-body">
+    <button
+      *ngIf="mode !== 'print'"
+      type="button"
+      class="text-button qr-back"
+      (click)="back.emit()"
+    >
+      <gui-icon name="ArrowLeft"></gui-icon>Volver
+    </button>
+    <div class="qr-select-intro">
+      <span class="qr-select-icon"><gui-icon name="QrCode" [size]="24"></gui-icon></span>
+      <div>
+        <h3>{{ heading }}</h3>
+        <p>{{ help }}</p>
+      </div>
+    </div>
+    <section *ngIf="mode !== 'model'" class="qr-scan-box">
+      <div class="qr-scan-controls">
+        <input
+          aria-label="Escanear o introducir QR"
+          [(ngModel)]="scanInput"
+          (keydown.enter)="addScanned($event)"
+          [disabled]="loading || !!error"
+          placeholder="Escanea con lector USB o pega el QR y pulsa Enter"
+          autocomplete="off"
+        /><button
+          type="button"
+          class="button secondary"
+          (click)="addScanned()"
+          [disabled]="loading || !!error || !scanInput.trim()"
+        >
+          Añadir QR</button
+        ><button
+          type="button"
+          class="button secondary"
+          (click)="cameraOpen = !cameraOpen"
+          [disabled]="loading || !!error"
+        >
+          <gui-icon name="QrCode"></gui-icon
+          >{{ cameraOpen ? 'Cerrar cámara' : 'Escanear con cámara' }}
+        </button>
+      </div>
+      <gui-qr-scanner
+        *ngIf="cameraOpen"
+        [continuous]="true"
+        (read)="scanValue($event)"
+      ></gui-qr-scanner>
+      <p *ngIf="scanMessage" role="status" class="qr-scan-success">{{ scanMessage }}</p>
+      <p *ngIf="scanError" role="alert" class="alert error">{{ scanError }}</p>
+    </section>
+    <div class="qr-search">
+      <gui-icon name="Search"></gui-icon
+      ><input
+        [attr.aria-label]="
+          mode === 'print'
+            ? 'Buscar activos para imprimir QR'
+            : mode === 'model'
+            ? 'Buscar modelos de producto'
+            : 'Buscar activo por producto o código'
+        "
+        [(ngModel)]="query"
+        (ngModelChange)="limit = 20"
+        placeholder="Producto, código, marca o serie…"
+      /><button
+        type="button"
+        *ngIf="query"
+        class="text-button"
+        (click)="query = ''"
+        aria-label="Borrar búsqueda de productos"
+      >
+        <gui-icon name="X"></gui-icon>
+      </button>
+    </div>
+    <div class="qr-select-filters">
+      <label
+        >Tipo de producto<select [(ngModel)]="family" (ngModelChange)="limit = 20">
+          <option value="">Todos los tipos</option>
+          <option *ngFor="let item of families" [value]="item">{{ item }}</option>
+        </select></label
+      ><label *ngIf="mode !== 'model'"
+        >Ubicación<select [(ngModel)]="location" (ngModelChange)="limit = 20">
+          <option value="">Todas las ubicaciones</option>
+          <option *ngFor="let item of locations" [value]="item">{{ item }}</option>
+        </select></label
+      >
+    </div>
+    <div *ngIf="loading" class="qr-select-state" role="status">
+      Buscando activos del inventario…
+    </div>
+    <div *ngIf="error" class="alert error" role="alert">
+      {{ error }} <button type="button" class="text-button" (click)="load()">Reintentar</button>
+    </div>
+    <ng-container *ngIf="!loading && !error">
+      <div class="qr-result-heading">
+        <span
+          >{{ matches.length }}
+          {{ mode === 'model' ? 'modelos encontrados' : 'activos encontrados' }}</span
+        ><button
+          type="button"
+          class="text-button"
+          *ngIf="matches.length && multiple"
+          (click)="addMatches()"
+        >
+          Añadir todos los resultados
+        </button>
+      </div>
+      <div class="qr-product" *ngFor="let group of groups | slice : 0 : limit; trackBy: trackGroup">
+        <div class="qr-product-top">
+          <gui-product-thumbnail
+            [photoId]="group.rows[0]?.photoId"
+            [label]="group.name"
+          ></gui-product-thumbnail>
+          <div class="qr-product-info">
+            <h4>{{ group.name }}</h4>
+            <p>
+              {{ group.brand || 'Sin marca' }}<span *ngIf="group.model"> · {{ group.model }}</span>
+            </p>
+            <small
+              ><gui-icon name="MapPin" [size]="13"></gui-icon
+              >{{
+                mode === 'model' ? 'Modelo del catálogo' : group.location || 'Sin ubicación'
+              }}</small
+            >
+          </div>
+          <button
+            type="button"
+            class="button secondary qr-add-group"
+            [class.added]="hasGroup(group)"
+            (click)="toggleGroup(group)"
+          >
+            <gui-icon [name]="hasGroup(group) ? 'Check' : 'Plus'"></gui-icon
+            >{{
+              multiple
+                ? (hasGroup(group) ? 'Añadidos' : 'Añadir') + ' ' + group.rows.length
+                : mode === 'model'
+                ? hasGroup(group)
+                  ? 'Elegido'
+                  : 'Elegir modelo'
+                : group.rows.length === 1
+                ? hasGroup(group)
+                  ? 'Elegido'
+                  : 'Elegir unidad'
+                : 'Elegir unidad (' + group.rows.length + ')'
+            }}
+          </button>
+        </div>
+        <button
+          type="button"
+          class="qr-expand"
+          *ngIf="mode !== 'model'"
+          [attr.aria-expanded]="expanded.has(group.key)"
+          (click)="expand(group.key)"
+        >
+          {{ expanded.has(group.key) ? 'Ocultar códigos' : 'Elegir unidades por código'
+          }}<gui-icon name="ChevronDown" [size]="14"></gui-icon>
+        </button>
+        <div class="qr-unit-list" *ngIf="expanded.has(group.key)">
+          <button
+            type="button"
+            *ngFor="let row of group.rows; trackBy: trackAsset"
+            [attr.aria-pressed]="selection.has(row.id)"
+            [class.chosen]="selection.has(row.id)"
+            (click)="toggle(row)"
+          >
+            <gui-icon [name]="selection.has(row.id) ? 'Check' : 'Plus'" [size]="13"></gui-icon
+            ><span class="qr-code-value">{{ row.code }}</span>
+          </button>
+        </div>
+      </div>
+      <button
+        type="button"
+        *ngIf="groups.length > limit"
+        class="button secondary"
+        (click)="limit = limit + 20"
+      >
+        Ver más productos
+      </button>
+      <div class="qr-select-state" *ngIf="!matches.length">
+        <strong>No encontramos coincidencias</strong>
+        <p>Prueba otro código o cambia los filtros.</p>
+        <button type="button" class="text-button" (click)="resetFilters()">
+          Limpiar búsqueda y filtros
+        </button>
+      </div>
+    </ng-container>
+    <section class="qr-chosen" *ngIf="selection.size">
+      <div class="qr-result-heading">
+        <strong>Tu selección · {{ selection.size }}</strong
+        ><button type="button" class="text-button" (click)="selection.clear()">Quitar todos</button>
+      </div>
+      <div class="qr-chosen-chips">
+        <button
+          type="button"
+          *ngFor="let row of chosen; trackBy: trackAsset"
+          [attr.aria-label]="'Quitar ' + (mode === 'model' ? row.name : row.code)"
+          (click)="toggle(row)"
+        >
+          {{ mode === 'model' ? row.name : row.code }}<gui-icon name="X" [size]="12"></gui-icon>
+        </button>
+      </div>
+    </section>
+  </div>
+  <div class="modal-footer qr-select-footer">
+    <span>{{
+      mode === 'print'
+        ? 'Etiquetas de 3,5 × 3 cm'
+        : mode === 'model'
+        ? 'Una referencia del catálogo'
+        : multiple
+        ? 'Hasta 100 activos por lote'
+        : 'Un activo por operación'
+    }}</span
+    ><button
+      type="button"
+      class="button primary"
+      [disabled]="loading || !!error || !selection.size"
+      (click)="showPreview()"
+    >
+      {{ confirmLabel }}
+      <span *ngIf="selection.size && multiple">({{ selection.size }})</span
+      ><gui-icon name="ArrowRight"></gui-icon>
+    </button>
+  </div>
+</ng-container>
+<ng-template #labelPreview
+  ><div class="modal-body qr-select-preview">
+    <button type="button" class="text-button qr-back" (click)="preview = []">
+      <gui-icon name="ArrowLeft"></gui-icon>Cambiar selección</button
+    ><gui-qr [assets]="preview"></gui-qr></div
+></ng-template>

@@ -1,0 +1,17 @@
+<span class="search-select-shell"
+  ><p-dropdown
+    [options]="options"
+    optionLabel="name"
+    optionValue="id"
+    [ngModel]="value"
+    (onChange)="select($event.value)"
+    [disabled]="disabled"
+    [filter]="true"
+    filterBy="name"
+    [showClear]="!required"
+    [ariaLabel]="label"
+    placeholder="Escribe para buscar…"
+    appendTo="body"
+    (onBlur)="touch()"
+  ></p-dropdown
+></span>

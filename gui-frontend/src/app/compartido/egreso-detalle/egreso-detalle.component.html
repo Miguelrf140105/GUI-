@@ -1,0 +1,77 @@
+<div class="modal-body">
+  <div *ngIf="error" class="alert error" role="alert">{{ error }}</div>
+  <gui-loading *ngIf="!detail && !error"></gui-loading>
+  <ng-container *ngIf="detail">
+    <div class="form-note">
+      <gui-icon name="FileText"></gui-icon
+      ><span
+        ><strong>{{ row.code }} · {{ row.type }}</strong
+        ><br />{{ row.institution }} · {{ row.date | date : 'dd MMM yyyy' }}</span
+      >
+    </div>
+    <p *ngIf="row.status === 'Confirmación parcial'">
+      Se muestran las unidades cuya salida ya fue confirmada. Las restantes siguen en Movimientos.
+    </p>
+    <section class="form-section">
+      <h3>Unidades egresadas · {{ detail.units.length }}</h3>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Producto</th>
+              <th>Serie</th>
+              <th>Origen</th>
+              <th>Motivo</th>
+              <th>Autorizó</th>
+              <th>Confirmó</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let unit of detail.units">
+              <td class="code">{{ unit.code }}</td>
+              <td>{{ unit.name }}</td>
+              <td>{{ unit.serial || '—' }}</td>
+              <td>{{ unit.origin || '—' }}</td>
+              <td>{{ unit.reason }}</td>
+              <td>{{ unit.authorizedBy }}</td>
+              <td>{{ unit.confirmedBy }}</td>
+              <td>{{ unit.date | date : 'dd MMM yyyy HH:mm' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="form-section">
+      <h3>Documentos de respaldo</h3>
+      <p *ngIf="!detail.documents.length">Este egreso no tiene documentos asociados.</p>
+      <details *ngFor="let doc of detail.documents">
+        <summary>{{ doc.type }} · {{ doc.number }} · {{ doc.date | date : 'dd MMM yyyy' }}</summary>
+        <gui-archivos
+          *ngIf="auth.can(701)"
+          [parent]="{ documentId: doc.id }"
+          [canUpload]="auth.can(702) && auth.can(1502)"
+        ></gui-archivos>
+      </details>
+      <div *ngIf="auth.can(1502)" class="form-grid">
+        <label
+          >Asociar documento existente<select
+            aria-label="Documento de respaldo"
+            [(ngModel)]="documentId"
+            [disabled]="busy"
+          >
+            <option [ngValue]="null">Selecciona un documento</option>
+            <option *ngFor="let doc of documents" [ngValue]="doc.id">
+              {{ doc.type }} · {{ doc.number }}
+            </option>
+          </select></label
+        >
+        <button class="button secondary" (click)="associate()" [disabled]="busy || !documentId">
+          {{ busy ? 'Asociando…' : 'Asociar documento' }}
+        </button>
+        <p>Los documentos se registran en Documentos.</p>
+      </div>
+    </section>
+  </ng-container>
+</div>

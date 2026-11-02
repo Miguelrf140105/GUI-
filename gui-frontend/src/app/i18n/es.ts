@@ -1,0 +1,15 @@
+export const esTranslation = {
+  startsWith: 'Empieza con',
+  contains: 'Contiene',
+  notContains: 'No contiene',
+  endsWith: 'Termina con',
+  equals: 'Igual',
+  notEquals: 'Diferente',
+  noFilter: 'Sin filtro',
+  emptyMessage: 'Sin resultados',
+  emptyFilterMessage: 'No se encontraron coincidencias',
+  clear: 'Limpiar',
+  apply: 'Aplicar',
+  accept: 'Aceptar',
+  reject: 'Cancelar',
+};

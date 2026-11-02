@@ -1,0 +1,12 @@
+<span class="product-thumbnail"
+  ><img
+    *ngIf="photoId && !failed"
+    [src]="photos.url(photoId)"
+    [alt]="label"
+    loading="lazy"
+    decoding="async"
+    width="64"
+    height="64"
+    (error)="failed = true" />
+  <gui-icon *ngIf="!photoId || failed" name="Package" [size]="26"></gui-icon
+></span>

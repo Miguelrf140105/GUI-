@@ -1,0 +1,21 @@
+<gui-ingreso-detalle [row]="row" (loaded)="detail = $event">
+  <div class="alert error intake-delete-warning" role="alert">
+    <strong>Se eliminarán este ingreso y todas sus unidades.</strong>
+    <p>Revisa la lista antes de confirmar.</p>
+  </div>
+  <p *ngIf="blockReason" class="alert error intake-delete-warning" role="alert">
+    {{ blockReason }}
+  </p>
+  <p *ngIf="error" class="alert error intake-delete-warning" role="alert">{{ error }}</p>
+</gui-ingreso-detalle>
+<div class="modal-footer">
+  <button class="button secondary" [disabled]="busy" (click)="cancel.emit()">Cancelar</button>
+  <button
+    class="button primary action-danger"
+    [disabled]="busy || !!blockReason || !auth.can(1403)"
+    (click)="submit()"
+  >
+    <gui-icon name="Trash2"></gui-icon
+    >{{ busy ? 'Anulando…' : 'Eliminar ingreso y ' + total + ' unidades' }}
+  </button>
+</div>

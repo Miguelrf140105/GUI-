@@ -1,0 +1,145 @@
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">GESTIÓN UNIVERSITARIA <span>/</span> VISTA GENERAL</div>
+    <h1>Todo en su lugar.</h1>
+    <p>Una mirada clara a los bienes de tu universidad.</p>
+  </div>
+  <button *ngIf="auth.can(302) && auth.can(1402)" class="button primary" (click)="modal = true">
+    <gui-icon name="Plus"></gui-icon>Registrar bienes
+  </button>
+</div>
+<div *ngIf="error" class="alert error" role="alert">{{ error }}</div>
+<gui-loading *ngIf="loading"></gui-loading
+><ng-container *ngIf="!loading"
+  ><div class="dashboard-topline">
+    <span><span class="online-dot"></span>Inventario a tu alcance</span
+    ><span>{{ today | date : 'dd MMM yyyy' }}</span>
+  </div>
+  <div class="stats-grid">
+    <button
+      class="stat-card"
+      *ngFor="let card of cards"
+      [disabled]="!auth.can(card.module * 10 + 1)"
+      (click)="go(card.module)"
+    >
+      <div class="stat-top">
+        <span>{{ card.label }}</span
+        ><span class="stat-icon" [ngClass]="card.color"
+          ><gui-icon [name]="card.icon"></gui-icon
+        ></span>
+      </div>
+      <strong>{{ stats[card.key] || 0 | number }}</strong>
+      <div class="stat-bottom">
+        <span>{{ card.detail }}</span
+        ><gui-icon name="ArrowUpRight"></gui-icon>
+      </div>
+    </button>
+  </div>
+  <div class="charts-grid">
+    <section class="panel activity-panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Actividad del inventario</h2>
+          <p>Ingresos y eventos del Kardex de los últimos seis meses</p>
+        </div>
+        <span class="legend">Eventos del Kardex</span>
+      </div>
+      <div class="area-chart" *ngIf="analytics.monthly.length">
+        <svg viewBox="0 0 680 220" role="img" aria-label="Actividad mensual del Kardex, incluidos los ingresos">
+          <line x1="45" x2="635" y1="180" y2="180" stroke="#dbe8df"></line>
+          <polyline [attr.points]="points" fill="none" stroke="#13877d" stroke-width="3"></polyline>
+          <text
+            *ngFor="let month of analytics.monthly; let index = index"
+            [attr.x]="45 + (index * 590) / 5"
+            y="210"
+            text-anchor="middle"
+            fill="#8a9b98"
+            font-size="10"
+          >
+            {{ month.label }}
+          </text>
+        </svg>
+      </div>
+      <gui-empty
+        *ngIf="!analytics.monthly.length"
+        text="Sin actividad registrada"
+        detail="Los eventos se muestran conforme se registren."
+      ></gui-empty>
+    </section>
+    <section class="panel distribution-panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Bienes por tipo</h2>
+          <p>Distribución de activos</p>
+        </div>
+        <gui-icon name="Package"></gui-icon>
+      </div>
+      <div class="donut-wrap">
+        <div class="donut" [style.background]="total ? gradient : '#e8eeea'">
+          <div>
+            <strong>{{ total }}</strong
+            ><span>activos</span>
+          </div>
+        </div>
+      </div>
+      <div class="distribution-legend">
+        <div *ngFor="let category of analytics.categories">
+          <span>{{ category.name }}</span
+          ><strong>{{ category.count }}</strong>
+        </div>
+      </div>
+    </section>
+  </div>
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Últimos movimientos</h2>
+        <p>Solicitudes recientes de traslado y salida</p>
+      </div>
+      <button *ngIf="auth.can(401)" class="text-button" (click)="go(40)">
+        Ver todos <gui-icon name="ArrowRight"></gui-icon>
+      </button>
+    </div>
+    <div class="table-scroll" *ngIf="recent.length">
+      <table>
+        <thead>
+          <tr>
+            <th>Activo</th>
+            <th>Movimiento</th>
+            <th>Destino</th>
+            <th>Situación</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of recent">
+            <td>{{ row.code }}</td>
+            <td>{{ row.type }}</td>
+            <td>{{ row.destination || '—' }}</td>
+            <td><gui-badge [value]="row.status"></gui-badge></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <gui-empty
+      *ngIf="!recent.length"
+      text="Sin movimientos recientes"
+      detail="Las solicitudes de movimiento aparecerán aquí."
+    ></gui-empty></section></ng-container
+><gui-modal
+  *ngIf="modal"
+  title="Registrar bienes al inventario"
+  [busy]="busy"
+  (close)="!busy && (modal = false)"
+  ><gui-inventario-registro
+    (busyChange)="busy = $event"
+    (cancel)="!busy && (modal = false)"
+    (saved)="saved($event)"
+  ></gui-inventario-registro
+></gui-modal>
+
+<gui-modal
+  *ngIf="printAssets.length"
+  title="Etiquetas de los activos registrados"
+  (close)="printAssets = []"
+  ><div class="modal-body"><gui-qr [assets]="printAssets"></gui-qr></div
+></gui-modal>

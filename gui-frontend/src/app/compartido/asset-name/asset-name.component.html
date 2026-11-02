@@ -1,0 +1,29 @@
+<form class="editor-form" (ngSubmit)="submit()">
+  <div class="modal-body">
+    <div *ngIf="error" class="alert error" role="alert">{{ error }}</div>
+    <div class="asset-name-code">
+      <small>Código patrimonial · protegido</small><strong>{{ asset.code }}</strong>
+    </div>
+    <label class="asset-name-field"
+      >Nombre del producto *<input
+        name="assetName"
+        aria-label="Nombre del producto"
+        [(ngModel)]="name"
+        maxlength="200"
+        required
+        [disabled]="busy"
+        autocomplete="off"
+    /></label>
+    <p class="asset-name-help">
+      Este cambio se aplica únicamente a este activo. El código patrimonial, el QR, el tipo de
+      producto y los demás datos se conservan. La modificación queda registrada en auditoría.
+    </p>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="button secondary" [disabled]="busy" (click)="cancel.emit()">
+      Cancelar</button
+    ><button type="submit" class="button primary" [disabled]="busy || !canSave">
+      {{ busy ? 'Guardando…' : 'Guardar nombre' }}
+    </button>
+  </div>
+</form>

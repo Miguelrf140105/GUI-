@@ -1,0 +1,56 @@
+import { Component, Input } from '@angular/core';
+
+@Component({
+  selector: 'gui-icon',
+  templateUrl: './icon.component.html',
+  styles: [':host { display: contents; }'],
+})
+export class IconComponent {
+  @Input() name = 'Package';
+  @Input() size = 18;
+  icons: Record<string, string> = {
+    ArrowLeft: 'arrow-left',
+    Package: 'box',
+    LayoutDashboard: 'th-large',
+    ArrowLeftRight: 'arrows-h',
+    MapPin: 'map-marker',
+    Wrench: 'cog',
+    Files: 'file',
+    ChartNoAxesCombined: 'chart-line',
+    Users: 'users',
+    ShieldCheck: 'shield',
+    SlidersHorizontal: 'sliders-h',
+    History: 'history',
+    Truck: 'shopping-cart',
+    ClipboardList: 'list',
+    GraduationCap: 'building',
+    Plus: 'plus',
+    X: 'times',
+    Search: 'search',
+    QrCode: 'qrcode',
+    Pencil: 'pencil',
+    Eye: 'eye',
+    Download: 'download',
+    RefreshCw: 'refresh',
+    LogOut: 'sign-out',
+    Menu: 'bars',
+    Info: 'info-circle',
+    Check: 'check',
+    CheckCircle2: 'check-circle',
+    LockKeyhole: 'lock',
+    Building2: 'building',
+    Trash2: 'trash',
+    ChevronDown: 'chevron-down',
+    ArrowRight: 'arrow-right',
+    ArrowUpRight: 'arrow-up-right',
+    Clock3: 'clock',
+    Send: 'send',
+    CheckCheck: 'check',
+    FileText: 'file',
+    Printer: 'print',
+    Upload: 'upload',
+    FolderTree: 'sitemap',
+    ChevronLeft: 'chevron-left',
+    ChevronRight: 'chevron-right',
+  };
+}

@@ -1,0 +1,20 @@
+<header class="topbar">
+  <div class="topbar-left">
+    <button class="icon-button menu-button" aria-label="Abrir menú" (click)="layout.mobile = true">
+      <gui-icon name="Menu" [size]="22"></gui-icon></button
+    ><gui-icon name="Building2"></gui-icon><span>Inventario · {{ institution.shortName }}</span>
+  </div>
+  <div class="topbar-right">
+    <span class="secure-label"
+      ><gui-icon name="LockKeyhole" [size]="13"></gui-icon>Sesión autenticada</span
+    >
+    <div class="user-avatar">{{ initials }}</div>
+    <div class="user-info">
+      <strong>{{ auth.usuario$.value?.name }}</strong
+      ><small>{{ auth.usuario$.value?.username }}</small>
+    </div>
+    <button class="icon-button" aria-label="Cerrar sesión" (click)="logout()">
+      <gui-icon name="LogOut"></gui-icon>
+    </button>
+  </div>
+</header>

@@ -1,0 +1,26 @@
+<div class="files-panel">
+  <div *ngIf="error" class="alert error" role="alert">{{ error }}</div>
+  <ng-container *ngIf="canUpload"
+    ><input
+      #uploadInput
+      type="file"
+      hidden
+      accept=".pdf,.png,.jpg,.jpeg"
+      (change)="upload($event)"
+    /><button type="button" class="upload-zone" [disabled]="busy" (click)="uploadInput.click()">
+      <gui-icon name="Upload" [size]="25"></gui-icon
+      ><strong>{{ busy ? 'Subiendo archivo…' : 'Seleccionar un archivo' }}</strong
+      ><span>PDF, PNG o JPEG · Máximo 10 MB</span>
+    </button></ng-container
+  ><a class="file-row" *ngFor="let file of files" [href]="api.url(file.id)"
+    ><gui-icon name="FileText"></gui-icon
+    ><span
+      ><strong>{{ file.name }}</strong
+      ><small>{{ file.size / 1024 | number : '1.0-0' }} KB</small></span
+    ><gui-icon name="Download"></gui-icon></a
+  ><gui-empty
+    *ngIf="!files.length"
+    text="Sin archivos adjuntos"
+    detail="Las fotos y documentos asociados aparecerán aquí."
+  ></gui-empty>
+</div>

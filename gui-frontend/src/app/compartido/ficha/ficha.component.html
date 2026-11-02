@@ -1,0 +1,120 @@
+<div class="drawer-overlay">
+  <button class="drawer-scrim" aria-label="Cerrar ficha" (click)="close.emit()"></button>
+  <section
+    class="asset-drawer"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'Ficha de ' + asset.code"
+  >
+    <div class="drawer-top">
+      <span class="eyebrow">FICHA DEL ACTIVO</span
+      ><button class="icon-button" aria-label="Cerrar ficha" (click)="close.emit()">
+        <gui-icon name="X"></gui-icon>
+      </button>
+    </div>
+    <div class="asset-summary">
+
+      <span class="code">{{ asset.code }}</span>
+      <h2>{{ asset.name }}</h2>
+      <div class="asset-badges">
+        <gui-badge [value]="asset.status"></gui-badge
+        ><gui-badge *ngIf="asset.movementStatus" [value]="asset.movementStatus"></gui-badge>
+      </div>
+      <gui-product-photos
+        [productId]="asset.productId || null"
+        (changed)="photosChanged.emit()"
+      ></gui-product-photos>
+      <button class="button secondary" (click)="qr.emit(asset)">
+        <gui-icon name="QrCode"></gui-icon>Ver etiqueta QR
+      </button>
+      <div class="asset-meta">
+        <div>
+          <gui-icon name="MapPin"></gui-icon
+          ><span
+            >Ubicación actual<strong>{{
+              asset.location || 'Fuera de la institución'
+            }}</strong></span
+          >
+        </div>
+        <div>
+          <gui-icon name="ShieldCheck"></gui-icon
+          ><span
+            >Responsable<strong>{{ asset.responsible || 'Sin asignar' }}</strong></span
+          >
+        </div>
+      </div>
+    </div>
+    <div class="drawer-tabs">
+      <button [class.active]="tab === 'history'" (click)="tab = 'history'">Kardex</button
+      ><button [class.active]="tab === 'info'" (click)="tab = 'info'">Información</button
+      ><button [class.active]="tab === 'specs'" (click)="tab = 'specs'">Especificaciones</button
+      ><button *ngIf="auth.can(701)" [class.active]="tab === 'files'" (click)="tab = 'files'">
+        Adjuntos
+      </button>
+    </div>
+    <div class="drawer-body">
+      <div *ngIf="error" class="alert error">{{ error }}</div>
+      <gui-loading *ngIf="busy"></gui-loading
+      ><ng-container *ngIf="!busy"
+        ><ng-container *ngIf="tab === 'history'"
+          ><div class="history-heading">
+            <h3>Historial de movimientos</h3>
+            <span>Solo consulta</span>
+          </div>
+          <div class="timeline">
+            <article *ngFor="let event of events">
+              <span class="timeline-dot"
+                ><gui-icon name="ArrowLeftRight" [size]="14"></gui-icon
+              ></span>
+              <div class="timeline-top">
+                <h4>{{ event.type }}</h4>
+                <small>{{ event.date | date : 'dd MMM yyyy' }}</small>
+              </div>
+              <gui-badge [value]="event.status"></gui-badge>
+              <div class="timeline-route">
+                <span>{{ event.origin || 'Ingreso externo' }}</span
+                ><gui-icon name="ArrowRight"></gui-icon
+                ><strong>{{ event.destination || 'Salida externa' }}</strong>
+              </div>
+              <p>{{ event.reason }}</p>
+              <div class="timeline-people">
+                <span
+                  >Ejecutó: <b>{{ event.executedBy }}</b></span
+                ><span *ngIf="event.authorizedBy"
+                  >Autorizó: <b>{{ event.authorizedBy }}</b></span
+                >
+              </div>
+            </article>
+          </div>
+          <gui-empty
+            *ngIf="!events.length"
+            text="Sin eventos registrados"
+            detail="Los eventos aparecerán al ejecutar operaciones."
+          ></gui-empty
+        ></ng-container>
+        <dl *ngIf="tab === 'info'" class="detail-grid">
+          <div *ngFor="let item of details">
+            <dt>{{ item[0] }}</dt>
+            <dd>{{ item[1] || '—' }}</dd>
+          </div>
+        </dl>
+        <dl *ngIf="tab === 'specs'" class="detail-grid">
+          <div *ngFor="let spec of specs">
+            <dt>{{ spec.name }}</dt>
+            <dd>{{ spec.value }} {{ spec.unit }}</dd>
+          </div>
+          <gui-empty
+            *ngIf="!specs.length"
+            text="Sin especificaciones"
+            detail="Las características se registran según el tipo de producto."
+          ></gui-empty>
+        </dl>
+        <gui-archivos
+          *ngIf="tab === 'files'"
+          [parent]="{ assetId: asset.id }"
+          [canUpload]="auth.can(702)"
+        ></gui-archivos
+      ></ng-container>
+    </div>
+  </section>
+</div>

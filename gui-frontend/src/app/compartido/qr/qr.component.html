@@ -1,0 +1,43 @@
+<div class="qr-panel">
+  <div *ngIf="error" role="alert" class="alert error">{{ error }}</div>
+  <p *ngIf="loading" role="status">Preparando etiquetas…</p>
+  <p>
+    {{ labels.length }} etiqueta(s) · 3,5 cm de ancho × 3 cm de alto · {{ pages.length }} hoja(s) A4
+  </p>
+  <div class="qr-preview" aria-label="Vista previa de etiquetas QR">
+    <section class="qr-sheet" *ngFor="let page of pages">
+      <article class="qr-label" *ngFor="let label of page">
+        <div class="qr-label-brand">
+          <svg viewBox="0 0 16 24" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path
+              d="M3 22V2h10v20M1 22h14M6 5h1m2 0h1M6 9h1m2 0h1M6 13h1m2 0h1M6 17h1m2 0h1"
+            /></svg
+          ><b>GUI</b><span>Patrimonio<br />universitario</span>
+        </div>
+        <img [src]="label.src" [alt]="'QR de ' + label.code" />
+        <div class="qr-label-code">{{ label.code }}</div>
+        <div class="qr-label-name" [title]="label.name">{{ label.name }}</div>
+      </article>
+    </section>
+  </div>
+  <p class="form-note">
+    Imprime en A4, escala 100 % o Tamaño real, sin ajustar y sin encabezados ni pies. Para descargar
+    el PDF, elige «Guardar como PDF» en el diálogo de impresión.
+  </p>
+  <div class="inline-actions">
+    <button
+      class="button primary"
+      [disabled]="loading || printing || !labels.length"
+      (click)="print()"
+    >
+      <gui-icon name="Printer"></gui-icon>Imprimir / guardar PDF
+    </button>
+    <a
+      *ngIf="labels.length === 1"
+      class="button secondary"
+      [href]="labels[0].src"
+      [download]="labels[0].code + '-QR.png'"
+      >Descargar QR</a
+    >
+  </div>
+</div>

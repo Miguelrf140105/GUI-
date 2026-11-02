@@ -1,0 +1,34 @@
+<div class="location-levels" role="group" [attr.aria-label]="label">
+  <label *ngFor="let step of steps; let index = index">
+    {{ step.label }}
+    <gui-search-select
+      [label]="label + ': ' + step.label"
+      [options]="step.options"
+      [ngModel]="step.value"
+      [ngModelOptions]="{ standalone: true }"
+      [disabled]="disabled"
+      (ngModelChange)="choose(index, $event)"
+    ></gui-search-select>
+  </label>
+</div>
+<div class="inline-actions" style="margin-top: 8px">
+  <button
+    *ngIf="branch && children(branch.id).length && value !== branch.id"
+    type="button"
+    class="text-button"
+    [disabled]="disabled"
+    (click)="useBranch()"
+  >
+    Usar {{ branch.name }} como ubicación
+  </button>
+  <button
+    *ngIf="path.length && !required"
+    type="button"
+    class="text-button"
+    [disabled]="disabled"
+    (click)="clear()"
+  >
+    Sin ubicación seleccionada
+  </button>
+</div>
+<small class="location-path" *ngIf="selectedPath">Seleccionado: {{ selectedPath }}</small>

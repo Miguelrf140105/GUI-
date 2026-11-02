@@ -1,0 +1,67 @@
+<div class="login-page">
+  <section class="login-story">
+    <a class="brand" routerLink="/"
+      ><span class="brand-mark"><gui-icon name="GraduationCap" [size]="28"></gui-icon></span
+      ><span
+        >GUI<small>Inventario · {{ institution.shortName }}</small></span
+      ></a
+    >
+    <div class="story-body">
+      <div class="story-tag"><span class="online-dot"></span>CADA BIEN TIENE UNA HISTORIA</div>
+      <h1>El patrimonio de tu universidad,<br /><em>en buenas manos.</em></h1>
+      <p>
+        Desde el primer ingreso hasta su último destino. Conoce dónde está cada bien y acompaña cada
+        movimiento.
+      </p>
+      <div class="story-features">
+        <span><gui-icon name="Package"></gui-icon>Inventario organizado</span
+        ><span><gui-icon name="ArrowLeftRight"></gui-icon>Trazabilidad completa</span
+        ><span><gui-icon name="ShieldCheck"></gui-icon>Acceso por permisos</span>
+      </div>
+      <div class="story-illustration">
+        <div class="illustration-card">
+          <gui-icon name="Package" [size]="30"></gui-icon>
+          <div>
+            <small>ACTIVO IDENTIFICADO</small><strong>Identificación individual</strong
+            ><span>Código, QR e historial</span>
+          </div>
+          <gui-icon name="QrCode" [size]="44"></gui-icon>
+        </div>
+      </div>
+    </div>
+    <small class="story-footer">GESTIÓN UNIVERSITARIA DE INVENTARIO</small>
+  </section>
+  <section class="login-form-area">
+    <form #form="ngForm" (ngSubmit)="form.valid && submit()">
+      <span class="login-kicker">BIENVENIDO A GUI</span>
+      <h2>Ingresa a tu espacio.</h2>
+      <p>Usa tu cuenta institucional para continuar.</p>
+      <label
+        >Usuario institucional<input
+          name="username"
+          autocomplete="username"
+          required
+          [(ngModel)]="username" /></label
+      ><label
+        >Contraseña<input
+          type="password"
+          name="password"
+          autocomplete="current-password"
+          required
+          [(ngModel)]="password"
+      /></label>
+      <div *ngIf="error" class="alert error" role="alert">{{ error }}</div>
+      <button class="button primary login-submit" [disabled]="busy">
+        {{ busy ? 'Ingresando…' : 'Iniciar sesión' }}<gui-icon name="ArrowRight"></gui-icon>
+      </button>
+      <a class="recovery-login-link" routerLink="/recuperar-contrasena"
+        >¿Olvidaste tu contraseña?</a
+      >
+      <div class="login-security">
+        <gui-icon name="LockKeyhole" [size]="14"></gui-icon>Acceso restringido a personal
+        autorizado.
+      </div>
+    </form>
+    <span class="login-foot">GUI · Gestión con claridad.</span>
+  </section>
+</div>
